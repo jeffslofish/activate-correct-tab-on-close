@@ -1,6 +1,6 @@
 # Activate Correct Tab on Close Chrome Extension
 
-When a tab is closed, activate the tab that created the closed tab.
+When a tab is closed, activate the tab that created the closed tab. If the tab that created the closed tab is itself closed, active the tab that created it, and so on.
 
 ## To run in dev mode:
 
