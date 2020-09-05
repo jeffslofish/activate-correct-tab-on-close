@@ -19,8 +19,6 @@ chrome.tabs.query({ active: true }, function (tabs) {
   tabs.forEach((tab) => {
     windows[tab.windowId] = { active: tab.id };
   });
-
-  console.log(windows);
 });
 
 // When a tab is created, save which tab was active at that time
@@ -29,8 +27,6 @@ chrome.tabs.onCreated.addListener(function (tab) {
     windows[tab.windowId][tab.id] = windows[tab.windowId].active;
     windows[tab.windowId].active = tab.id;
   }
-
-  console.log(windows);
 });
 
 // When a tab is activated, change the current active tab for its window
@@ -39,7 +35,6 @@ chrome.tabs.onActivated.addListener(function (activeInfo) {
     if (activeInfo.windowId in windows) {
       windows[activeInfo.windowId].active = tab.id;
     }
-    console.log(windows);
   });
 });
 
@@ -59,6 +54,4 @@ chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
       });
     }
   }
-
-  console.log(windows);
 });
