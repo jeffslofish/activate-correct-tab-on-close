@@ -1,57 +1,52 @@
-/* example "windows" object structure:
-{
-    25: { // windowId 25  
-        active: 5, // last active tab id for window 25 is 5
-        7: 4, // tab id 7 was created by tab id 4 (or 4 was active when 7 was created)
-        9: 2        
-    },
-    40: {
-        active: 10,
-        10: 9,
-        12: 3
-    }
-}
-*/
-const windows = {};
+let activeTab = null;
+const tabTree = {};
+const debug = false;
 
-// When the script first starts, save the active tab for each window
-chrome.tabs.query({ active: true }, function (tabs) {
-  tabs.forEach((tab) => {
-    windows[tab.windowId] = { active: tab.id };
-  });
-});
-
-// When a tab is created, save which tab was active at that time
-chrome.tabs.onCreated.addListener(function (tab) {
-  if (tab.windowId in windows) {
-    windows[tab.windowId][tab.id] = windows[tab.windowId].active;
-    windows[tab.windowId].active = tab.id;
+// When the script first starts, save the active tab for the active window
+chrome.tabs.query({ lastFocusedWindow: true, active: true }, (tabs) => {
+  if (tabs.length > 0) {
+    activeTab = tabs[0].id;
   }
+  debug ? console.log('script start ', activeTab, tabTree) : '';
 });
 
-// When a tab is activated, change the current active tab for its window
+// When a tab is created, save which tab was active at that time in tabTree
+chrome.tabs.onCreated.addListener(function (tab) {
+  tabTree[tab.id] = activeTab;
+  debug ? console.log('onCreated ', activeTab, tabTree) : '';
+});
+
+//When a tab is activated, change the current active tab
 chrome.tabs.onActivated.addListener(function (activeInfo) {
-  chrome.tabs.get(activeInfo.tabId, function (tab) {
-    if (activeInfo.windowId in windows) {
-      windows[activeInfo.windowId].active = tab.id;
-    }
-  });
+  activeTab = activeInfo.tabId;
+  debug ? console.log('onActivated ', activeTab, tabTree) : '';
 });
 
 // When a tab is removed, activate the tab that was active when the now removed tab was created
+// and update tabTree and activeTab
 chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
-  if (removeInfo.isWindowClosing) return;
+  if (tabId in tabTree) {
+    chrome.tabs.get(tabTree[tabId], function (tab) {
+      // Chome will issue an error if the tab doesn't exist and we don't check this variable
+      if (chrome.runtime.lastError) {
+        return;
+      }
 
-  if (removeInfo.windowId in windows) {
-    if (tabId in windows[removeInfo.windowId]) {
-      const tabIdToHighlight = windows[removeInfo.windowId][tabId];
-
-      chrome.tabs.get(tabIdToHighlight, function (tab) {
-        chrome.tabs.highlight({
-          windowId: removeInfo.windowId,
-          tabs: [tab.index],
-        });
+      chrome.tabs.highlight({
+        windowId: tab.windowId,
+        tabs: tab.index,
       });
+      chrome.windows.update(tab.windowId, { focused: true });
+      activeTab = tab.id;
+    });
+
+    for (const key in tabTree) {
+      if (tabTree[key] === tabId) {
+        tabTree[key] = tabTree[tabId];
+      }
     }
+    delete tabTree[tabId];
   }
+
+  debug ? console.log('onRemoved ', activeTab, tabTree) : '';
 });
