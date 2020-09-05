@@ -1,0 +1,11 @@
+{
+    "name": "Activate Correct Tab on Close",
+    "version": "1.0",
+    "description": "When a tab is closed, activate the tab that created the closed tab.",
+    "permissions": ["tabs"],
+    "background": {
+      "scripts": ["background.js"],
+      "persistent": false
+    },
+    "manifest_version": 2
+  }
