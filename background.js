@@ -16,7 +16,7 @@ chrome.tabs.onCreated.addListener(function (tab) {
   debug ? console.log('onCreated ', activeTab, tabTree) : '';
 });
 
-//When a tab is activated, change the current active tab
+// When a tab is activated, change the current active tab
 chrome.tabs.onActivated.addListener(function (activeInfo) {
   activeTab = activeInfo.tabId;
   debug ? console.log('onActivated ', activeTab, tabTree) : '';
